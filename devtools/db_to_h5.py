@@ -17,9 +17,19 @@ def db_to_h5(db_file, start, chunk):
     with sq.connect(db_file) as db:
         print(f"Connected to: {db_file}...")
         h5_file = (db_file.split('.')[0] + '.h5')
+
+        print("Counting tiles...")
+        cur = db.cursor()
+        cur.execute(f"SELECT count(DISTINCT tile_x) FROM traces WHERE trace_id BETWEEN {start} AND {chunk + start - 1}")
+        count_tile_x = cur.fetchone()[0]
+        cur.execute(f"SELECT count(DISTINCT tile_y) FROM traces WHERE trace_id BETWEEN {start} AND {chunk + start - 1}")
+        count_tile_y = cur.fetchone()[0]
+        count_traces = 20000
+        print(f"Counted {count_tile_x} distinct x tiles and {count_tile_y} distinct y tiles...")
+
         with h5.File(h5_file, 'x') as f:
             print(f"Created h5 file: {h5_file}...")
-            traces = f.create_dataset("traces", (2400000,), dtype=np.int8)
+            traces = f.create_dataset("traces", (count_tile_x, count_tile_y, count_traces), dtype=np.int8)
             metadata = f.create_group("metadata")
             grp_trace_id = metadata.create_dataset("trace_id", (2400000,), dtype=np.int8)
             grp_tile_x = metadata.create_dataset("tile_x", (160000,), dtype=np.uint8)
@@ -30,12 +40,16 @@ def db_to_h5(db_file, start, chunk):
 
             print(f"Format created in h5 file...")
 
-            for trace in pd.read_sql(f"SELECT * FROM traces WHERE trace_id >= {start} LIMIT {chunk}", con=db, chunksize=chunk):
+            for i in range(start, chunk + start):
+                trace = pd.read_sql(f"SELECT * FROM traces WHERE trace_id = {i}", con=db)
                 trace_id = int(trace['trace_id'][0])
                 tile_x = int(trace['tile_x'][0])
                 tile_y = int(trace['tile_y'][0])
 
-                print(f"Processing trace_id: {trace_id} -> TILE -> x:{tile_x}, y:{tile_y} -- {math.floor(100*(trace_id/((start + chunk) - 1)))}%")
+                if i == chunk + start - 1:
+                    print(f"Processed {trace_id} trace_id's -> TILE -> x:{tile_x}, y:{tile_y} -- {math.floor(100* (trace_id/( (start + chunk) - 1) ))}%")
+                else:
+                    print(f"Processed {trace_id} trace_id's -> TILE -> x:{tile_x}, y:{tile_y} -- {math.floor(100 * (trace_id / ((start + chunk) - 1)))}%", end='\r')
 
                 sample = pd.DataFrame(np.frombuffer(trace['samples'][0], dtype=np.uint8), dtype=np.uint8)
                 k = pd.DataFrame(np.frombuffer(trace['k'][0], dtype=np.uint8), dtype=np.uint8)
