@@ -1,6 +1,10 @@
 import unittest
 import numpy as np
+#histogram_method
+from src.notscared.statistics.histogram import Histogram_Method
+
 from src.notscared.statistics.welford import Welford
+#main
 
 # import python_file_name.py
 
@@ -69,5 +73,33 @@ class TestWelford(unittest.TestCase):
             welford.push(x)
         self.assertAlmostEqual(np.std(random_list), welford.std_dev)
 
+#histogram_method
+class TestHistogram(unittest.TestCase):
+
+    def test_Mean_20_50(self):
+        hist = Histogram_Method(50, 256)
+        data = np.random.randint(32, 192, (20, 50), dtype=np.uint8)
+        for row in data:
+            hist.push(row)
+        self.assertAlmostEqual(hist.mean, np.apply_along_axis(np.mean, 0, data))
+
+    def test_Variance_20_50(self):
+        hist = Histogram_Method(50, 256)
+        data = np.random.randint(32, 192, (20, 50), dtype=np.uint8)
+        for row in data:
+            hist.push(row)
+        self.assertAlmostEqual(hist.variance, np.apply_along_axis(np.var, 0, data))
+
+    def test_standard_deviation_20_50(self):
+        hist = Histogram_Method(50, 256)
+        data = np.random.randint(32, 192, (20, 50), dtype=np.uint8)
+        for row in data:
+            hist.push(row)
+        self.assertAlmostEqual(hist.std_dev, np.apply_along_axis(np.std, 0, data))
+
+if __name__ == '__main__':
+    unittest.main()
+=======
 if __name__ == "__main__":
     unittest.main()
+#main
