@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 
 class Welford:
@@ -40,6 +41,21 @@ class Welford:
         new_mean = self.mean + (x - self.mean) * 1.0 / self.n
         newS = self._S + (x - self.mean) * (x - new_mean)
         self.mean, self._S = new_mean, newS
+
+    def push_array(self, x: np.ndarray):
+        """Updates the running calculation with all values from a 1d array."""
+        if x is None:
+            return
+        # todo: find a way to vectorize this online algorithm. currently uses
+        # self.n on every number added, so we can't just do the below logic
+        # for everything in parallel. need to do some work rearranging
+        # the math
+        for i in range(x.shape[0]):
+            self.n += 1
+            # Performance-wise, the below division is not ideal
+            new_mean = self.mean + (x[i] - self.mean) * 1.0 / self.n
+            newS = self._S + (x[i] - self.mean) * (x[i] - new_mean)
+            self.mean, self._S = new_mean, newS
 
     @property
     def variance(self):  # This might benefit from caching
