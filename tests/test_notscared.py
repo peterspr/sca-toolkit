@@ -1,5 +1,6 @@
 import unittest
 import numpy as np
+from src.notscared.statistics.histogram import Histogram_Method
 from src.notscared.statistics.welford import Welford
 
 # import python_file_name.py
@@ -9,6 +10,28 @@ class TestNotScared(unittest.TestCase):
     def test_example(self):
         self.assertTrue(2 == 2)
 
+class TestHistogram(unittest.TestCase):
+
+    def test_Mean_20_50(self):
+        hist = Histogram_Method(50, 256)
+        data = np.random.randint(32, 192, (20, 50), dtype=np.uint8)
+        for row in data:
+            hist.push(row)
+        self.assertTrue(np.allclose(hist.mean, np.apply_along_axis(np.mean, 0, data)))
+
+    def test_Variance_20_50(self):
+        hist = Histogram_Method(50, 256)
+        data = np.random.randint(32, 192, (20, 50), dtype=np.uint8)
+        for row in data:
+            hist.push(row)
+        self.assertTrue(np.allclose(hist.variance, np.apply_along_axis(np.var, 0, data)))
+
+    def test_standard_deviation_20_50(self):
+        hist = Histogram_Method(50, 256)
+        data = np.random.randint(32, 192, (20, 50), dtype=np.uint8)
+        for row in data:
+            hist.push(row)
+        self.assertTrue(np.allclose(hist.std_dev, np.apply_along_axis(np.std, 0, data)))
 
 class TestWelford(unittest.TestCase):
     def test_all_0(self):
