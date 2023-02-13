@@ -19,13 +19,13 @@ Sbox = (
             0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
             )
 
-apply_sbox = lambda x: Sbox[x]
+apply_sbox = lambda x: Sbox[int(x)]
+vec_apply_sbox = np.vectorize(apply_sbox)
 
 def create_leakage_table(plaintextByteArray:np.ndarray, useHammingWeight:bool):
     leakage = np.zeros((plaintextByteArray.size, 256), np.ubyte)
     for i, ptxt in enumerate(plaintextByteArray):
         distanceTo = 0 if useHammingWeight else np.bitwise_xor(np.arange(256), ptxt)
-        sboxValues = np.bitwise_xor(np.arange(256), ptxt)
-        np.apply_along_axis(apply_sbox, 0, sboxValues)
+        sboxValues = vec_apply_sbox(np.bitwise_xor(np.arange(256), ptxt))
         leakage[i] = np.bitwise_xor(distanceTo, sboxValues)
     return leakage
