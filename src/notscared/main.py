@@ -2,7 +2,7 @@ import fire
 from file_handling.readh5 import ReadH5
 from distinguishers.cpa import CPA
 
-def run_cpa(file='C:\\Users\\omni\\Documents\\CS46X\\notscared\\notscared\\src\\notscared\\1x1x100000_r1_singlerail5_sr_ise.h5', low_byte='0', high_byte='2', traces=24999, hamming_weight='1', num_batches='10'):
+def run_cpa(file, low_byte, high_byte, traces, hamming_weight, num_batches=None):
     print(f"Getting traces from file: {file}...")
 
     num_batches = int(num_batches) if num_batches is not None else None
@@ -28,5 +28,4 @@ def run_cpa(file='C:\\Users\\omni\\Documents\\CS46X\\notscared\\notscared\\src\\
 
 
 if __name__ == "__main__":
-    run_cpa()
-    # fire.Fire({"run_cpa": run_cpa, "read": ReadH5}) 
+    fire.Fire({"run_cpa": run_cpa, "read": ReadH5}) 
