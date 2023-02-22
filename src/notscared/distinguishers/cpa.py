@@ -1,6 +1,6 @@
 import numpy as np
 import math as math
-from utils.leakage import create_leakage_table
+from src.notscared.utils.leakage import create_leakage_table
 # from statistics.welford import Welford
 
 class CPA:
@@ -27,7 +27,7 @@ class CPA:
         for byte in range(self.byte_range[0], self.byte_range[1]):
             for leakage_key_hypothesis in range(leakage_cube.shape[2]):
                 self.leakage_accs[byte, leakage_key_hypothesis, 0] += np.sum(leakage_cube[:, byte, leakage_key_hypothesis])
-                self.leakage_accs[byte, leakage_key_hypothesis, 1] += np.sum(np.square(leakage_cube[:, byte, leakage_key_hypothesis]))
+                self.leakage_accs[byte, leakage_key_hypothesis, 1] += np.sum(np.square(leakage_cube[:, byte, leakage_key_hypothesis], dtype=np.float32))
         for point_in_time in range(traces.shape[1]):
             self.trace_accs[point_in_time, 0] += np.sum(traces[:, point_in_time])
             self.trace_accs[point_in_time, 1] += np.sum(np.square(traces[:, point_in_time]))
@@ -36,7 +36,7 @@ class CPA:
                     trace_slice = traces[:, point_in_time]
                     leakage_slice = leakage_cube[:, byte, leakage_key_hypothesis]
                     product_arr = np.multiply(trace_slice, leakage_slice, dtype=np.float32)
-                    self.product_acc[byte, leakage_key_hypothesis, point_in_time] = np.sum(product_arr)
+                    self.product_acc[byte, leakage_key_hypothesis, point_in_time] += np.sum(product_arr)
 
         print(f'traces_processed: {self.traces_processed}')
 

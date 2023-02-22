@@ -2,6 +2,9 @@ import unittest
 import numpy as np
 from src.notscared.statistics.histogram import Histogram_Method
 from src.notscared.statistics.welford import Welford
+from devtools.data_synthesis.correlation_data import CorrelationData
+from src.notscared.distinguishers.cpa import CPA
+from src.notscared.file_handling.readh5 import ReadH5
 
 # import python_file_name.py
 
@@ -91,6 +94,39 @@ class TestWelford(unittest.TestCase):
         for x in random_list:
             welford.push(x)
         self.assertAlmostEqual(np.std(random_list), welford.std_dev)
+
+class TestCPA(unittest.TestCase):
+    def test_perfect_correlation_1(self):
+        key = np.random.randint(0, 256, (16), dtype=np.uint8)
+        plaintext = np.random.randint(0, 256, (100, 16), dtype=np.uint8)
+        
+        print("Generating Data.")
+        cd = CorrelationData(100, 2000, key, plaintext, hamming_weight=True)
+        cd.generate_data("test_data.h5")
+
+        print("Reading file.")
+        read = ReadH5("test_data.h5")
+        
+        cpa_instance = CPA((0, 1), 2000, True)
+
+        num_batches = -1
+        batch_num = 0
+        while(read.next()):
+            cpa_instance.push_batch(read.get_batch_samples(), read.get_batch_ptxts())
+            batch_num += 1
+            # print("Batches pushed %d", batch_num)
+            if  batch_num == num_batches:
+                break
+
+        key_candidates = cpa_instance.get_key_candidates()
+        
+        print("KEY CANDIDATES:\n", key_candidates)
+        print("KEY:\n", key)
+
+        read.close_file()
+        self.assertEqual(key_candidates[0], key[0])
+        
+        
 
 if __name__ == "__main__":
     unittest.main()
