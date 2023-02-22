@@ -6,11 +6,11 @@ from src.notscared.utils.leakage import Sbox
 
 
 class CorrelationData:
-    def __init__(self, num_traces, sample_size, key, plaintext, num_x_tiles=1, num_y_tiles=1, hamming_weight=True):
+    def __init__(self, num_traces, sample_size, num_x_tiles=1, num_y_tiles=1, hamming_weight=True):
         self.num_traces = num_traces
         self.sample_size = sample_size
-        self.key = key
-        self.plaintext = plaintext
+        self.key = np.random.randint(0, 256, (16), dtype=np.uint8)
+        self.plaintext = np.random.randint(0, 256, (num_traces, 16), dtype=np.uint8)
         self.num_x_tiles = num_x_tiles
         self.num_y_tiles = num_y_tiles
         self.hamming_weight = hamming_weight
