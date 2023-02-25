@@ -4,8 +4,8 @@ import numpy as np
 import fire
 
 
-def convert_non_profiled(db_name, batch_size=10, dev_break_on_first_batch=True):
-    h5_name = db_name.split('.')[0] + "NON_PROFILED" + ".h5"
+def convert_non_profiled(db_name, batch_size=10, ):
+    h5_name = db_name.split('.')[0] + "_NON_PROFILED" + ".h5"
     batch_size = int(batch_size)
 
     # Connect to SQLite database
@@ -66,8 +66,6 @@ def convert_non_profiled(db_name, batch_size=10, dev_break_on_first_batch=True):
             sbuf = np.frombuffer(sample, dtype=np.uint8)
             hdf5_file["traces/samples"][tile_x][tile_y][index + batch_offset] = sbuf
 
-        if dev_break_on_first_batch:
-            break
 
     hdf5_file.close()
     conn.close()
@@ -75,4 +73,4 @@ def convert_non_profiled(db_name, batch_size=10, dev_break_on_first_batch=True):
 
 if __name__ == '__main__':
     fn = "/Volumes/passport0/15x8x20000_r1_singlerail5_sr_ise.db"
-    convert_non_profiled(fn)  # breaks on first batch defaults to True.
+    convert_non_profiled(fn, 5)  # breaks on first batch defaults to True.
