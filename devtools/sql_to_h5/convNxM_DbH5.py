@@ -30,11 +30,11 @@ def convert_non_profiled(db_name, batch_size=10, ):
     # get number of distinct tile x and y in non-profiled scenario
     print("Getting number of tile x...")
     n_tile_x = cursor.execute(
-        "SELECT COUNT(DISTINCT tile_x) FROM tracesWHERE k = (SELECT k FROM traces WHERE trace_id = (SELECT COUNT(trace_id) FROM traces));").fetchone()[
+        "SELECT COUNT(DISTINCT tile_x) FROM traces WHERE k = (SELECT k FROM traces WHERE trace_id = (SELECT COUNT(trace_id) FROM traces));").fetchone()[
         0]
     print("Getting number of tile y...")
     n_tile_y = cursor.execute(
-        "SELECT COUNT(DISTINCT tile_y) FROM tracesWHERE k = (SELECT k FROM traces WHERE trace_id = (SELECT COUNT(trace_id) FROM traces));").fetchone()[
+        "SELECT COUNT(DISTINCT tile_y) FROM traces WHERE k = (SELECT k FROM traces WHERE trace_id = (SELECT COUNT(trace_id) FROM traces));").fetchone()[
         0]
 
     # create datasets -- do these need a 4th dimension? --> shape = (n_tile_x, n_tile_y, number_of_traces, sample_length)
