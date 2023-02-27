@@ -1,10 +1,25 @@
 import sqlite3
 import h5py
 import numpy as np
-import fire
+
+"""
+To convert DB file to an H5 file of profiled data only:
+    - go to main and call convert_non_profiled("/path/to/db/file", batch_size=?)
+    - in terminal: python3 convNxM_DbH5.py
+    - if converting a file where key is 'key' and not 'k':
+        - on line 40 cp/pst all of the following:
+            "SELECT COUNT(DISTINCT tile_x) FROM traces WHERE key = (SELECT key FROM traces WHERE trace_id = (SELECT COUNT(trace_id) FROM traces));").fetchone()[
+        - on line 47:
+            "SELECT COUNT(DISTINCT tile_y) FROM traces WHERE key = (SELECT key FROM traces WHERE trace_id = (SELECT COUNT(trace_id) FROM traces));").fetchone()[
+        - on line 66:
+            "SELECT trace_id, tile_x, tile_y, key, ptxt, samples FROM traces WHERE key = (SELECT key FROM traces WHERE key = (SELECT COUNT(trace_id) FROM traces));")
 
 
-def convert_non_profiled(db_name, batch_size=10, ):
+
+"""
+
+
+def convert_non_profiled(db_name, batch_size=10):
     h5_name = db_name.split('.')[0] + "_NON_PROFILED" + ".h5"
     batch_size = int(batch_size)
 
@@ -65,7 +80,6 @@ def convert_non_profiled(db_name, batch_size=10, ):
 
             sbuf = np.frombuffer(sample, dtype=np.uint8)
             hdf5_file["traces/samples"][tile_x][tile_y][index + batch_offset] = sbuf
-
 
     hdf5_file.close()
     conn.close()
