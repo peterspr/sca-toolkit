@@ -3,6 +3,8 @@ import h5py
 import numpy as np
 
 """
+USAGE:
+
 To convert DB file to an H5 file of profiled data only:
     - go to main and call convert_non_profiled("/path/to/db/file", batch_size=?)
     - in terminal: python3 convNxM_DbH5.py
@@ -13,9 +15,6 @@ To convert DB file to an H5 file of profiled data only:
             "SELECT COUNT(DISTINCT tile_y) FROM traces WHERE key = (SELECT key FROM traces WHERE trace_id = (SELECT COUNT(trace_id) FROM traces));").fetchone()[
         - on line 66:
             "SELECT trace_id, tile_x, tile_y, key, ptxt, samples FROM traces WHERE key = (SELECT key FROM traces WHERE key = (SELECT COUNT(trace_id) FROM traces));")
-
-
-
 """
 
 
