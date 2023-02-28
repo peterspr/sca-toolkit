@@ -1,6 +1,6 @@
 import numpy as np
 import math as math
-from utils.leakage import create_leakage_table
+from src.notscared.utils.leakage import create_leakage_table
 # from statistics.welford import Welford
 
 class CPA:
