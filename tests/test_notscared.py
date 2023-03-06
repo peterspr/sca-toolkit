@@ -8,8 +8,9 @@ from devtools.data_synthesis.correlation_data import CorrelationData
 
 
 class TestNotScared(unittest.TestCase):
-    def test_example(self):
-        self.assertTrue(2 == 2)
+    pass
+    # def test_example(self):
+    #     self.assertTrue(2 == 2)
 
 
 class TestHistogram(unittest.TestCase):
