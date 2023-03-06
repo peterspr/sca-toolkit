@@ -1,26 +1,9 @@
 import h5py as h5
-import numpy as np
 import matplotlib.pyplot as plt
-
-"""
-    Usage:
-        - Class:
-            my_h5 = ReadH5(filename, 0, 99)
-            my_h5.print_file()
-            ...
-        - CLI:
-            `python3 readh5.py --file=filename --start=arg --stop=arg COMMAND arg1 ...`
-            ex:
-                `python3 readh5.py --file=my_data.h5 --start=0 --stop=4 get_key_from_index 1`
-
-            `python3 readh5.py --file=filename` -- would read the whole file in, but with CLI you must pass a COMMAND! So...
-            `python3 readh5.py --file=filename print_file`
-
-"""
 
 
 class ReadH5:
-    def __init__(self, file, batch_size=10):
+    def __init__(self, file, tile, batch_size=10):
         self._file = file
         self._ptxt = None
         self._k = None
@@ -28,15 +11,26 @@ class ReadH5:
         self._cursor = 0
         self._file = h5.File(file, "r")
         self._batch_size = batch_size
+        self._x = tile[0]
+        self._y = tile[1]
 
-    def next(self):
-        self._k = self._file["traces/k"][self._cursor:self._cursor + self._batch_size]
-        self._ptxt = self._file["traces/ptxt"][self._cursor:self._cursor + self._batch_size]
-        self._samples = self._file["traces/samples"][self._cursor:self._cursor + self._batch_size]
+    def next(self, slice_start=None, slice_end=None, step=1):
+        # update arrays based on x, y and cursor.
+        self._k = self._file["traces/k"][self._x][self._y][self._cursor:self._cursor + self._batch_size]
+        self._ptxt = self._file["traces/ptxt"][self._x][self._y][self._cursor:self._cursor + self._batch_size]
+
+        if slice_start is None and slice_end is None and step == 1:
+            self._samples = self._file["traces/samples"][self._x][self._y][self._cursor:self._cursor + self._batch_size]
+        elif slice_start is None and slice_end is None and step != 1:
+            self._samples = self._file["traces/samples"][self._x][self._y][self._cursor:self._cursor + self._batch_size][::step]
+        else:
+            self._samples = self._file["traces/samples"][self._x][self._y][self._cursor:self._cursor + self._batch_size][slice_start:slice_end:step]
+
         self._cursor += self._batch_size
 
+        # if end of data on last tiles close file and return false.
         if len(self._k) == 0:
-            print("End of Array")
+            print("End of File")
             self.close_file()
             return False
 
@@ -47,11 +41,6 @@ class ReadH5:
             self._file.close()
             self._file = None
 
-    def print_batch(self):
-        print("KEYS\n", self._k)
-        print("PLAINTEXTS\n", self._ptxt)
-        print("SAMPLES\n", self._samples)
-
     def get_batch_keys(self):
         return self._k
 
@@ -61,17 +50,9 @@ class ReadH5:
     def get_batch_samples(self):
         return self._samples
 
-    # def get_key_from_index(self, index):
-    #     return self._k[index]
-
-    # def get_ptxt_from_index(self, index):
-    #     return self._ptxt[index]
-
-    # def get_sample_from_index(self, index):
-    #     return self._sample[index]
-
     def plot_samples(self):
         plt.style.use("_mpl-gallery")
         for sample in self._samples:
             plt.plot(sample, color="b")
         plt.show()
+

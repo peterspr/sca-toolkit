@@ -102,7 +102,7 @@ class TestCPA(unittest.TestCase):
         cd.generate_data("test_data.h5")
 
         print("Reading file.")
-        read = ReadH5("test_data.h5", batch_size=10)
+        read = ReadH5("test_data.h5", (0, 0), batch_size=10)
         
         cpa_instance = CPA((0, 16), True)
 
