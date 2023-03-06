@@ -48,4 +48,3 @@ class CorrelationData:
             f["traces/samples"][:, :, i] = temp_samples
 
         f.close()
-
