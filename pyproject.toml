@@ -25,7 +25,6 @@ classifiers = [
 "Bug Tracker" = "https://github.com/decryptofy/notscared/issues"
 
 [tool.autopep8]
-max_line_length = 127
 ignore = "E501,W6"  # or ["E501", "W6"]
 in-place = true
 recursive = true

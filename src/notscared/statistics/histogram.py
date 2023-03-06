@@ -53,7 +53,7 @@ class Histogram_Method:
 
     @property
     def mean(self):
-        if (self._up_to_date):
+        if self._up_to_date:
             return self.mean_cache
         totalObservations = np.apply_along_axis(np.sum, 1, self.histogram[:][:])
         mulOperands = np.multiply(self.histogram[:][:], np.uint64(range(self.num_bins)), dtype=np.uint64)
@@ -62,7 +62,7 @@ class Histogram_Method:
 
     @property
     def variance(self):
-        if (self._up_to_date):
+        if self._up_to_date:
             return self.variance_cache
         totalObservations = np.apply_along_axis(np.sum, 1, self.histogram[:][:])
         centeredDiff = np.subtract(np.vstack([np.uint64(range(self.num_bins))] * self.num_samples_per_trace), np.vstack([self.mean] * self.num_bins).T)
@@ -73,7 +73,7 @@ class Histogram_Method:
 
     @property
     def std_dev(self):
-        if (self._up_to_date):
+        if self._up_to_date:
             return self.std_dev_cache
         return np.sqrt(self.variance, dtype=np.longdouble)
 

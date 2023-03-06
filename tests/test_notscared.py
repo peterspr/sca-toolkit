@@ -2,11 +2,9 @@ import unittest
 import numpy as np
 from src.notscared.statistics.histogram import Histogram_Method
 from src.notscared.statistics.welford import Welford
-from devtools.data_synthesis.correlation_data import CorrelationData
 from src.notscared.distinguishers.cpa import CPA
 from src.notscared.file_handling.readh5 import ReadH5
-
-# import python_file_name.py
+from devtools.data_synthesis.correlation_data import CorrelationData
 
 
 class TestNotScared(unittest.TestCase):
@@ -51,26 +49,26 @@ class TestWelford(unittest.TestCase):
     def test_mean_10(self):
         # mean when n=10
         welford = Welford()
-        list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        for x in list:
+        arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        for x in arr:
             welford.push(x)
-        self.assertAlmostEqual(np.mean(list), welford.mean)
+        self.assertAlmostEqual(np.mean(arr), welford.mean)
 
     def test_variance_10(self):
         # variance when n=10
         welford = Welford()
-        list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        for x in list:
+        arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        for x in arr:
             welford.push(x)
-        self.assertAlmostEqual(np.var(list), welford.variance)
+        self.assertAlmostEqual(np.var(arr), welford.variance)
 
     def test_stddev_10(self):
         # standard deviation when n=10
         welford = Welford()
-        list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        for x in list:
+        arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        for x in arr:
             welford.push(x)
-        self.assertAlmostEqual(np.std(list), welford.std_dev)
+        self.assertAlmostEqual(np.std(arr), welford.std_dev)
 
     # Review Tests
     def test_mean_random_10(self):
@@ -111,7 +109,7 @@ class TestCPA(unittest.TestCase):
 
         num_batches = -1
         batch_num = 0
-        while (read.next()):
+        while read.next():
             cpa_instance.push_batch(read.get_batch_samples(), read.get_batch_ptxts())
             batch_num += 1
             # print("Batches pushed %d", batch_num)

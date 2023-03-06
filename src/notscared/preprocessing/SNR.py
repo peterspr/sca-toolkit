@@ -1,13 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import random
 
 """
     1. Take in a plaintxt with samples
     2. Get a ptxt with byte 0x00 in the 0th place make a bucket
     3. Do step 2 for each ptxt/sample with 0x01 -> 0xFF in 0th place
     4. Update mean and variance in each bucket as an np.array
-    """
+"""
 
 
 class SNR:
@@ -55,7 +54,8 @@ class SNR:
 
         try:
             # vertorize divide with lambda function on vertical variances
-            def apply_variance(x): return x / self.n_traces
+            def apply_variance(x):
+                return x / self.n_traces
             apply_variance(self._accumulator[:][:][1])
 
             # the Vertical Variance of the Vertical Means

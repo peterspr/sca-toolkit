@@ -1,6 +1,6 @@
+import sys
 import numpy as np
 import h5py as h5
-import sys
 
 
 def create_random_dataset(filename, x_shape="1", y_shape="1"):

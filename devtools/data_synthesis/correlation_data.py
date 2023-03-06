@@ -1,6 +1,5 @@
 import numpy as np
 import h5py
-import random
 from src.notscared.utils.leakage import Sbox
 
 
@@ -30,7 +29,8 @@ class CorrelationData:
         f.create_dataset("traces/ptxt", data=np.zeros((self.num_traces, 16), dtype=np.uint8), dtype=np.uint8)
         f.create_dataset("traces/k", data=np.zeros((self.num_traces, 16), dtype=np.uint8), dtype=np.uint8)
 
-        def hw(x): return HW_LUT[x]
+        def hw(x):
+            return HW_LUT[x]
 
         for i in range(self.num_traces):
             f["traces/ptxt"][i] = self.plaintext[i]

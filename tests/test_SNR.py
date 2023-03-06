@@ -1,10 +1,8 @@
 import unittest
-from src.notscared.preprocessing.SNR import SNR
-from devtools.data_synthesis.correlation_data import CorrelationData
-from src.notscared.file_handling.readh5 import ReadH5
-import random
 import numpy as np
-
+from src.notscared.preprocessing.SNR import SNR
+from src.notscared.file_handling.readh5 import ReadH5
+from devtools.data_synthesis.correlation_data import CorrelationData
 
 class testSNR(unittest.TestCase):
     def test_1(self):
