@@ -6,7 +6,7 @@ import random
     1. Take in a plaintxt with samples
     2. Get a ptxt with byte 0x00 in the 0th place make a bucket
     3. Do step 2 for each ptxt/sample with 0x01 -> 0xFF in 0th place
-    4. Update mean and variance in each bucket as an np.array 
+    4. Update mean and variance in each bucket as an np.array
     """
 
 
@@ -24,7 +24,7 @@ class SNR:
         """
         input: takes in an array of plaintexts and an array of samples
         output: None, updates accumulator values.
-        description: takes in plaintext array and samples array and calculates the accumulator values of 
+        description: takes in plaintext array and samples array and calculates the accumulator values of
             mean and variance based on the first byte value and trace point in time. (vertically)
 
         """
@@ -42,7 +42,7 @@ class SNR:
                     new_mean = current_mean + (samples[ptxt][trace_index] - current_mean) * 1.0 / self.n_traces
                     # get new S by multiplying (xi - pop_mean) and (xi - sample_mean) and adding it to current_S
                     new_S = current_S + (samples[ptxt][trace_index] - current_mean) * (
-                            samples[ptxt][trace_index] - new_mean)
+                        samples[ptxt][trace_index] - new_mean)
 
                     # set accumulator values for next loop.
                     self._accumulator[p_byte][trace_index][0] = new_mean
@@ -55,7 +55,7 @@ class SNR:
 
         try:
             # vertorize divide with lambda function on vertical variances
-            apply_variance = lambda x: x / self.n_traces
+            def apply_variance(x): return x / self.n_traces
             apply_variance(self._accumulator[:][:][1])
 
             # the Vertical Variance of the Vertical Means
@@ -69,7 +69,6 @@ class SNR:
 
         except IndexError as e:
             print(f"Failed to Calculate... {e}")
-
 
     def plot_snr(self, plot_values):
         s = self.snr
@@ -85,4 +84,3 @@ class SNR:
         if self._snr is None:
             self.calculate()
         return self._snr
-

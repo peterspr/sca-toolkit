@@ -24,7 +24,6 @@ def simple_conv(db_name, batch_size=10):
     print("Getting number of traces...")
     number_of_traces = cursor.execute("SELECT COUNT(*) FROM traces WHERE k = (SELECT k FROM traces WHERE trace_id=100000);").fetchone()[0]
 
-
     print("Getting sample length...")
     sample_length = len(cursor.execute("SELECT samples FROM traces;").fetchone()[0])
 
@@ -58,7 +57,6 @@ def simple_conv(db_name, batch_size=10):
             hdf5_file["traces/samples"][index + batch_offset] = sbuf
 
         # print(f"batch {batch_offset//batch_size} done")
-
 
     # Close connections
     print("Columns converted. Closing files...")

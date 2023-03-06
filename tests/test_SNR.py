@@ -37,12 +37,6 @@ class testSNR(unittest.TestCase):
         print(signal_noise.snr, np_snr)
 
 
-        
-
-
-
-
-
 if __name__ == '__main__':
     test = testSNR()
     test.test_1()

@@ -13,6 +13,7 @@ class TestNotScared(unittest.TestCase):
     def test_example(self):
         self.assertTrue(2 == 2)
 
+
 class TestHistogram(unittest.TestCase):
 
     def test_Mean_20_50(self):
@@ -35,6 +36,7 @@ class TestHistogram(unittest.TestCase):
         for row in data:
             hist.push(row)
         self.assertTrue(np.allclose(hist.std_dev, np.apply_along_axis(np.std, 0, data)))
+
 
 class TestWelford(unittest.TestCase):
     def test_all_0(self):
@@ -95,6 +97,7 @@ class TestWelford(unittest.TestCase):
             welford.push(x)
         self.assertAlmostEqual(np.std(random_list), welford.std_dev)
 
+
 class TestCPA(unittest.TestCase):
     def test_perfect_correlation_1(self):
         print("Generating Data.")
@@ -103,30 +106,28 @@ class TestCPA(unittest.TestCase):
 
         print("Reading file.")
         read = ReadH5("test_data.h5", batch_size=10)
-        
+
         cpa_instance = CPA((0, 16), True)
 
         num_batches = -1
         batch_num = 0
-        while(read.next()):
+        while (read.next()):
             cpa_instance.push_batch(read.get_batch_samples(), read.get_batch_ptxts())
             batch_num += 1
             # print("Batches pushed %d", batch_num)
-            if  batch_num == num_batches:
+            if batch_num == num_batches:
                 break
 
         key_candidates = cpa_instance.get_key_candidates()
-        
+
         np.set_printoptions(precision=1)
         print("KEY:\n", cd.key)
         print("KEY CANDIDATES:\n", key_candidates[0])
         print("KEY CANDIDATES CORRELATION:\n", key_candidates[1])
-        
 
         read.close_file()
         self.assertTrue(np.array_equal(key_candidates[0], cd.key))
-        
-        
+
 
 if __name__ == "__main__":
     unittest.main()
