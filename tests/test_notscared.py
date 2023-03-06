@@ -98,13 +98,13 @@ class TestWelford(unittest.TestCase):
 class TestCPA(unittest.TestCase):
     def test_perfect_correlation_1(self):
         print("Generating Data.")
-        cd = CorrelationData(100, 2000, hamming_weight=True)
+        cd = CorrelationData(100, 10000, hamming_weight=True)
         cd.generate_data("test_data.h5")
 
         print("Reading file.")
-        read = ReadH5("test_data.h5")
+        read = ReadH5("test_data.h5", batch_size=10)
         
-        cpa_instance = CPA((0, 1), 2000, True)
+        cpa_instance = CPA((0, 16), True)
 
         num_batches = -1
         batch_num = 0
@@ -117,11 +117,14 @@ class TestCPA(unittest.TestCase):
 
         key_candidates = cpa_instance.get_key_candidates()
         
-        print("KEY CANDIDATES:\n", key_candidates)
+        np.set_printoptions(precision=1)
         print("KEY:\n", cd.key)
+        print("KEY CANDIDATES:\n", key_candidates[0])
+        print("KEY CANDIDATES CORRELATION:\n", key_candidates[1])
+        
 
         read.close_file()
-        self.assertEqual(key_candidates[0], cd.key[0])
+        self.assertTrue(np.array_equal(key_candidates[0], cd.key))
         
         
 

@@ -1,6 +1,6 @@
 import numpy as np
 
-Sbox = (
+Sbox = np.array([
             0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
             0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
             0xB7, 0xFD, 0x93, 0x26, 0x36, 0x3F, 0xF7, 0xCC, 0x34, 0xA5, 0xE5, 0xF1, 0x71, 0xD8, 0x31, 0x15,
@@ -17,15 +17,44 @@ Sbox = (
             0x70, 0x3E, 0xB5, 0x66, 0x48, 0x03, 0xF6, 0x0E, 0x61, 0x35, 0x57, 0xB9, 0x86, 0xC1, 0x1D, 0x9E,
             0xE1, 0xF8, 0x98, 0x11, 0x69, 0xD9, 0x8E, 0x94, 0x9B, 0x1E, 0x87, 0xE9, 0xCE, 0x55, 0x28, 0xDF,
             0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
-            )
+            ])
 
-apply_sbox = lambda x: Sbox[int(x)]
-vec_apply_sbox = np.vectorize(apply_sbox)
+HW_LUT = np.array([
+            0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
+            1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+            1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+            2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+            1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+            2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+            2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+            3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+            1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+            2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+            2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+            3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+            2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+            3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+            3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+            4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
+            ])
 
-def create_leakage_table(plaintextByteArray:np.ndarray, useHammingWeight:bool):
-    leakage = np.zeros((plaintextByteArray.size, 256), np.ubyte)
-    for i, ptxt in enumerate(plaintextByteArray):
-        distanceTo = 0 if useHammingWeight else np.bitwise_xor(np.arange(256), ptxt)
-        sboxValues = vec_apply_sbox(np.bitwise_xor(np.arange(256), ptxt))
-        leakage[i] = np.bitwise_xor(distanceTo, sboxValues)
-    return leakage
+def create_leakage_table(ptxt_bytes: np.ndarray, use_hamming_weight: bool = True):
+    # init array with key candidates 0-255 for one byte
+    # Needs to be a column vector to broadcast
+    keys = np.arange(256).reshape(-1, 1)
+    
+    # shape: (NUM_POSSIBLE_BYTE_VALS, NUM_AES_KEY_BYTES)
+    ptxt_keys_mat = np.bitwise_xor(ptxt_bytes, keys)
+
+    # Apply sbox to all of ptxt_keys_mat. Numpy lets us use an ndarray as an index and it just works
+    # [:] is required to ensure we're not allocating a new array
+    ptxt_keys_mat[:] = Sbox[ptxt_keys_mat]
+    
+    if use_hamming_weight:
+        # Hamming Weight
+        ptxt_keys_mat[:] = HW_LUT[ptxt_keys_mat]
+    else:
+        # Hamming Distance
+        ptxt_keys_mat[:] = HW_LUT[np.bitwise_xor(ptxt_keys_mat, ptxt_bytes)]
+
+    return ptxt_keys_mat
