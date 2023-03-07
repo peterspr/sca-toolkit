@@ -12,7 +12,7 @@ Usage: `python3 convDBtoH5.py --file=your_file_path --start=NUMBER --n=NUMBER`
 def simple_conv(db_name, batch_size=10):
     # make h5_name
     h5_name = db_name.split('.')[0] + ".h5"
-    print(f"Converting file...")
+    print("Converting file...")
 
     # Connect to SQLite database
     conn = sqlite3.connect(db_name)
@@ -23,7 +23,6 @@ def simple_conv(db_name, batch_size=10):
 
     print("Getting number of traces...")
     number_of_traces = cursor.execute("SELECT COUNT(*) FROM traces WHERE k = (SELECT k FROM traces WHERE trace_id=100000);").fetchone()[0]
-
 
     print("Getting sample length...")
     sample_length = len(cursor.execute("SELECT samples FROM traces;").fetchone()[0])
@@ -45,7 +44,7 @@ def simple_conv(db_name, batch_size=10):
 
         # print("Converting to NumPy Array...")
         # np_traces = np.stack(traces, axis=-1)  # stacks each row into numpy array -- [[keys], [plaintexts], [samples]]
-        np_traces = np.array(traces)
+        # np_traces = np.array(traces)
 
         # Convert each sqlite column to a dataset
         # print(f"Converting columns...")
@@ -58,7 +57,6 @@ def simple_conv(db_name, batch_size=10):
             hdf5_file["traces/samples"][index + batch_offset] = sbuf
 
         # print(f"batch {batch_offset//batch_size} done")
-
 
     # Close connections
     print("Columns converted. Closing files...")

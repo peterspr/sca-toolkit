@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 
 class ReadH5:
-    def __init__(self, file, tile, batch_size=10):
+    def __init__(self, file, tile=(0,0), batch_size=10):
         self._file = file
         self._ptxt = None
         self._k = None
@@ -55,4 +55,3 @@ class ReadH5:
         for sample in self._samples:
             plt.plot(sample, color="b")
         plt.show()
-
