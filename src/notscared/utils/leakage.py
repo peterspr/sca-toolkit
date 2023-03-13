@@ -38,24 +38,21 @@ HW_LUT = np.array([
     4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 ])
 
+# init array with key candidates 0-255 for one byte
+# Needs to be a column vector to broadcast
+keys = np.arange(256).reshape(-1, 1)
 
 def create_leakage_table(ptxt_bytes: np.ndarray, use_hamming_weight: bool = True):
-    # init array with key candidates 0-255 for one byte
-    # Needs to be a column vector to broadcast
-    keys = np.arange(256).reshape(-1, 1)
-
     # shape: (NUM_POSSIBLE_BYTE_VALS, NUM_AES_KEY_BYTES)
-    ptxt_keys_mat = np.bitwise_xor(ptxt_bytes, keys)
-
-    # Apply sbox to all of ptxt_keys_mat. Numpy lets us use an ndarray as an index and it just works
-    # [:] is required to ensure we're not allocating a new array
-    ptxt_keys_mat[:] = Sbox[ptxt_keys_mat]
 
     if use_hamming_weight:
         # Hamming Weight
-        ptxt_keys_mat[:] = HW_LUT[ptxt_keys_mat]
+        intermediate = np.bitwise_xor(ptxt_bytes, keys)
+        intermediate[:] = HW_LUT[intermediate]
+        return intermediate
     else:
         # Hamming Distance
-        ptxt_keys_mat[:] = HW_LUT[np.bitwise_xor(ptxt_keys_mat, ptxt_bytes)]
-
-    return ptxt_keys_mat
+        sbox_in = np.bitwise_xor(ptxt_bytes, keys)
+        sbox_out = Sbox[sbox_in]
+        result = HW_LUT[np.bitwise_xor(sbox_out, sbox_in)]
+        return result

@@ -5,7 +5,18 @@ NUM_POSSIBLE_BYTE_VALS = 256
 
 
 class CPA:
+    """
+    Correlation Power Analysis distinguisher.
+    
+    Calculates the correlation between the measured leakage (traces) and modelled leakage for each point_in_time (sample index)
+    using the Hamming Weight or Hamming Distance power models.
+    """
     def __init__(self, byte_range, use_hamming_weight=True, precision=np.float32):
+        """
+        byte_range: Range of key bytes to calculate. i.e. (0, 1) will only do the math for the key byte at index 0. (0, 16) for all 16 bytes.
+        use_hamming_weight: Whether to use the Hamming Weight leakage model (if true) or Hamming Distance leakage model (if false)
+        precision: A numpy dtype to use for the accumulators holding intermediate values for calculating the correlation coefficients.
+        """
         # If false it will use hamming distance
         self.USE_HAMMING_WEIGHT = use_hamming_weight
 
@@ -26,6 +37,12 @@ class CPA:
         self.results = None
 
     def push_batch(self, traces: np.ndarray, plaintext: np.ndarray):
+        """
+        Push a 2d array of traces and plaintexts for processing.
+        A single plaintext needs to be broken up into a numpy array of its 16 constituent bytes.
+        traces.shape = (BATCH_SIZE, TRACE_DURATION)
+        plaintext.shape = (BATCH_SIZE, PLAINTEXT_BYTES)
+        """
         # Clear outdated results if more data is pushed after CPA.calculate()
         self.results = None
 
@@ -56,15 +73,25 @@ class CPA:
         self.trace_squared_acc += np.sum(np.square(traces, dtype=self.PRECISION), axis=0, dtype=self.PRECISION)
 
         # Populate accumulator with sum of traces*leakages
-        self.product_acc += np.sum((traces[:, np.newaxis, np.newaxis, :] * leakage_cube[:, :, :, np.newaxis]), axis=0, dtype=self.PRECISION)
+        leakage_cube_t = leakage_cube.transpose((1, 2, 0))
+        self.product_acc += np.dot(leakage_cube_t, traces)
 
         self.traces_processed += BATCH_SIZE
         print(f'traces_processed: {self.traces_processed}', end='\r')
 
     def calculate(self):
+        """
+        Calculate the Pearson correlation coefficient for the data.
+        Each value in the 3d results array is a correlation coefficient.
+        
+        If results[129, 3, 12000] == 0.63, that means the measured traces have a 0.63 
+        correlation at the point_in_time column 12000, with a 3rd key byte value of 129.
+        
+        results.shape = (NUM_POSSIBLE_BYTE_VALS, NUM_AES_KEY_BYTES, TRACE_DURATION)
+        """
         # shape: (BYTE_VALS, KEY_BYTES, TRACE_DURATION)
         numerator = self.traces_processed * self.product_acc - self.trace_acc * self.leakage_acc[:, :, np.newaxis]
-        xy = self.traces_processed * self.trace_squared_acc * self.leakage_squared_acc[:, :, np.newaxis] - self.trace_acc * self.leakage_acc[:, :, np.newaxis]
+        xy = ((self.traces_processed * self.trace_squared_acc) - np.square(self.trace_acc, dtype=self.PRECISION)) * ((self.traces_processed * self.leakage_squared_acc) - np.square(self.leakage_acc, dtype=self.PRECISION))[:, :, np.newaxis]
         denominator = np.sqrt(xy, dtype=self.PRECISION)
         results = numerator / denominator
 
@@ -72,6 +99,7 @@ class CPA:
         return results
 
     def get_key_candidates(self):
+        """Return an array of the 16 key bytes with the highest correlation by byte index"""
         if self.results is None:
             self.calculate()
 

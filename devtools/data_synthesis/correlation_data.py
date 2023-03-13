@@ -38,9 +38,7 @@ class CorrelationData:
             temp_samples = hw(temp_samples).astype('uint8')
 
             for byte in range(16):
-                perfect_plaintext_leakage = HW_LUT[self.plaintext[i, byte]]
-                perfect_sbox_leakage = HW_LUT[Sbox[self.plaintext[i, byte] ^ self.key[byte]]]
-                temp_samples[4 + byte] = perfect_plaintext_leakage
+                perfect_sbox_leakage = HW_LUT[self.plaintext[i, byte] ^ self.key[byte]]
                 temp_samples[24 + byte] = perfect_sbox_leakage
 
             f["traces/tile_0/tile_0/samples"][i] = temp_samples
