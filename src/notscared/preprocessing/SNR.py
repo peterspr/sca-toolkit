@@ -2,85 +2,98 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 """
-    1. Take in a plaintxt with samples
-    2. Get a ptxt with byte 0x00 in the 0th place make a bucket
-    3. Do step 2 for each ptxt/sample with 0x01 -> 0xFF in 0th place
-    4. Update mean and variance in each bucket as an np.array
-"""
+USAGE:
 
+snr_instance = SNR( [...array of byte positions...] )
+
+read_in_values = ReadH5(filename, batchsize=1000)
+
+while read_in_values.next():
+    snr_instance.push(read_in_values.get_batch_ptxts(), read_in_values.get_batch_samples())
+
+snr = snr_instance.snr # this calls calculate for you.
+
+snr_instance.plot() # this shows a pyplot of SNR, different colors per byte position, can call calculate and self.snr for you.
+"""
 
 class SNR:
 
-    def __init__(self, n_traces: int):
-        # declare an array of 256 (0x00 -> 0xFF), number of traces in a sample, and then [0] == mean and [1] == variance
-        self._accumulator = np.empty((256, n_traces, 2))
-        # declare n_traces to be accessed by self
-        self.n_traces = n_traces
+    def __init__(self, byte_positions: list):
+        # VALUES TO SAMPLE LENGTH AND TRACES PROCESSED BY TOTAL AND BUCKET.
+        self.trace_duration = 0 
+        # self.traces_processed = 0
+        self.traces_processed_bins = None
+
+        # ACCUMULATOR OF MEAN AND VARIANCE
+        self._mean_accumulator = None
+        self._S_accumulator = None
+        # HIDDEN SNR AND BYTE POSITIONS.
 
         self._snr = None
-
-    def push(self, ptxts: np.ndarray, samples: np.ndarray):
+        self._byte_positions = np.array(byte_positions, dtype=np.uint8)
+        self._has_data = False
+        self._indices = None
+        
+    def push(self, ptxts: np.ndarray, traces: np.ndarray):
         """
-        input: takes in an array of plaintexts and an array of samples
+        input: takes in a plaintexts, a sample, and an array of byte positions.
         output: None, updates accumulator values.
-        description: takes in plaintext array and samples array and calculates the accumulator values of
-            mean and variance based on the first byte value and trace point in time. (vertically)
-
+        description: takes in plaintext  and sample and calculates the accumulator values of 
+            mean and variance (accumulated vertically) based on the byte values passed.
         """
+
         try:
-            # for each ptxt in
-            for ptxt in range(ptxts.shape[0]):
-                p_byte = int(ptxts[ptxt][0])  # first byte of ptxt
-                # for each trace
-                for trace_index in range(self.n_traces):
-                    # index in by first byte value, trace value (vertical column), mean value access OR variance value access
-                    current_mean = self._accumulator[p_byte][trace_index][0]
-                    current_S = self._accumulator[p_byte][trace_index][1]
+            if not self._has_data:
+                self._has_data = True
+                self.trace_duration = traces.shape[1]
+                self.traces_processed_bins = np.zeros((len(self._byte_positions), 256), dtype=np.uint16)
 
-                    # get the new mean by adding (xi - x_mean)/n
-                    new_mean = current_mean + (samples[ptxt][trace_index] - current_mean) * 1.0 / self.n_traces
-                    # get new S by multiplying (xi - pop_mean) and (xi - sample_mean) and adding it to current_S
-                    new_S = current_S + (samples[ptxt][trace_index] - current_mean) * (
-                        samples[ptxt][trace_index] - new_mean)
+                self._mean_accumulator = np.zeros((len(self._byte_positions), 256, self.trace_duration), dtype=np.float32)
+                self._S_accumulator = np.zeros((len(self._byte_positions), 256, self.trace_duration), dtype=np.float32)
 
-                    # set accumulator values for next loop.
-                    self._accumulator[p_byte][trace_index][0] = new_mean
-                    self._accumulator[p_byte][trace_index][1] = new_S
+                self._indices = np.zeros(traces.shape[0], dtype=np.uint16)
 
+            for index in range(traces.shape[0]):
+                for key_byte in self._byte_positions:
+                    self.traces_processed_bins[key_byte, ptxts[index, key_byte]] += 1
+                    old_mean = np.copy(self._mean_accumulator[key_byte, ptxts[index, key_byte]])
+                    self._mean_accumulator[key_byte, ptxts[index, key_byte]] += ((traces[index] - old_mean) * 1.0) / self.traces_processed_bins[key_byte, ptxts[index, key_byte]]
+                    self._S_accumulator[key_byte, ptxts[index, key_byte]] += ((traces[index] - old_mean)) * ((traces[index] - self._mean_accumulator[key_byte, ptxts[index, key_byte]]))                    
+                        
         except IndexError as e:
             print(f"Failed to push... {e}")
 
     def calculate(self):
-
+        """
+        input: None. Prerequisite -> push values to SNR
+        output: None. Sets hidden value self._snr
+        description: Computes SNR for pushed traces, vertically.
+        """
         try:
-            # vertorize divide with lambda function on vertical variances
-            def apply_variance(x):
-                return x / self.n_traces
-            apply_variance(self._accumulator[:][:][1])
-
-            # the Vertical Variance of the Vertical Means
-            signal = np.var(self._accumulator[:][:][0])
-
-            # the Vertical Mean of the Vertical Variance
-            noise = np.mean(self._accumulator[:][:][1])
-
-            # return SNR
-            self._snr = signal / noise
+            signal = np.var(self._mean_accumulator, axis=1)
+            noise = np.mean(self._S_accumulator, axis=1)
+            snr = signal / noise
+            self._snr = snr
 
         except IndexError as e:
             print(f"Failed to Calculate... {e}")
 
-    def plot_snr(self, plot_values):
-        s = self.snr
-        vertical_plot_values = np.stack(plot_values, axis=-1)
+    def plot(self):
+        """
+        input: None. Uses self.snr
+        output: pyplot graph
+        description: plots SNR x-axis=trace_duration(time) y-axis=SNR(of that time)
+        """
+        colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'b', 'g', 'r', 'c', 'm', 'y', 'k', 'b', 'g']
         plt.style.use("_mpl-gallery")
-        for value in vertical_plot_values:
-            plt.plot(value[value > s], color="r")
-            plt.plot(value[value < s], color="b")
+        for pos in range(len(self._byte_positions)):
+            plt.plot(self.snr[pos], color=f"{colors[pos]}")
         plt.show()
 
     @property
     def snr(self):
+        # calculate if not previously calculated
         if self._snr is None:
             self.calculate()
+        # return the snr array
         return self._snr
