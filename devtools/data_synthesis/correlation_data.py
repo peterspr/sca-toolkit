@@ -4,13 +4,11 @@ from src.notscared.utils.leakage import Sbox
 
 
 class CorrelationData:
-    def __init__(self, num_traces, sample_size, num_x_tiles=1, num_y_tiles=1, hamming_weight=True):
+    def __init__(self, num_traces, sample_size, hamming_weight=True):
         self.num_traces = num_traces
         self.sample_size = sample_size
         self.key = np.random.randint(0, 256, (16), dtype=np.uint8)
         self.plaintext = np.random.randint(0, 256, (num_traces, 16), dtype=np.uint8)
-        self.num_x_tiles = num_x_tiles
-        self.num_y_tiles = num_y_tiles
         self.hamming_weight = hamming_weight
 
     def generate_data(self, file_name):
@@ -25,16 +23,16 @@ class CorrelationData:
 
         f = h5py.File(file_name, "w")
 
-        f.create_dataset("traces/samples", data=np.zeros((self.num_x_tiles, self.num_y_tiles, self.num_traces, self.sample_size), dtype=np.uint8), dtype=np.uint8)
-        f.create_dataset("traces/ptxt", data=np.zeros((self.num_x_tiles, self.num_y_tiles, self.num_traces, 16), dtype=np.uint8), dtype=np.uint8)
-        f.create_dataset("traces/k", data=np.zeros((self.num_x_tiles, self.num_y_tiles, self.num_traces, 16), dtype=np.uint8), dtype=np.uint8)
+        f.create_dataset("traces/tile_0/tile_0/samples", data=np.zeros((self.num_traces, self.sample_size), dtype=np.uint8), dtype=np.uint8)
+        f.create_dataset("traces/tile_0/tile_0/plaintext", data=np.zeros((self.num_traces, 16), dtype=np.uint8), dtype=np.uint8)
+        f.create_dataset("traces/tile_0/tile_0/key", data=np.zeros((self.num_traces, 16), dtype=np.uint8), dtype=np.uint8)
 
         def hw(x):
             return HW_LUT[x]
 
         for i in range(self.num_traces):
-            f["traces/ptxt"][:, :, i] = self.plaintext[i]
-            f["traces/k"][:, :, i] = self.key
+            f["traces/tile_0/tile_0/plaintext"][i] = self.plaintext[i]
+            f["traces/tile_0/tile_0/key"][i] = self.key
             temp_samples = np.random.randint(32, 192, (self.sample_size), dtype=np.uint8)
 
             temp_samples = hw(temp_samples).astype('uint8')
@@ -45,6 +43,6 @@ class CorrelationData:
                 temp_samples[4 + byte] = perfect_plaintext_leakage
                 temp_samples[24 + byte] = perfect_sbox_leakage
 
-            f["traces/samples"][:, :, i] = temp_samples
+            f["traces/tile_0/tile_0/samples"][i] = temp_samples
 
         f.close()

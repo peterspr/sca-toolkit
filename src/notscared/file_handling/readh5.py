@@ -16,15 +16,15 @@ class ReadH5:
 
     def next(self, slice_start=None, slice_end=None, step=1):
         # update arrays based on x, y and cursor.
-        self._k = self._file["traces/k"][self._x][self._y][self._cursor:self._cursor + self._batch_size]
-        self._ptxt = self._file["traces/ptxt"][self._x][self._y][self._cursor:self._cursor + self._batch_size]
+        self._k = self._file[f"traces/tile_{self._x}/tile_{self._y}/key"][self._cursor:self._cursor + self._batch_size]
+        self._ptxt = self._file[f"traces/tile_{self._x}/tile_{self._y}/plaintext"][self._cursor:self._cursor + self._batch_size]
 
         if slice_start is None and slice_end is None and step == 1:
-            self._samples = self._file["traces/samples"][self._x][self._y][self._cursor:self._cursor + self._batch_size]
+            self._samples = self._file[f"traces/tile_{self._x}/tile_{self._y}/samples"][self._cursor:self._cursor + self._batch_size]
         elif slice_start is None and slice_end is None and step != 1:
-            self._samples = self._file["traces/samples"][self._x][self._y][self._cursor:self._cursor + self._batch_size][::step]
+            self._samples = self._file[f"traces/tile_{self._x}/tile_{self._y}/samples"][self._cursor:self._cursor + self._batch_size][::step]
         else:
-            self._samples = self._file["traces/samples"][self._x][self._y][self._cursor:self._cursor + self._batch_size][slice_start:slice_end:step]
+            self._samples = self._file[f"traces/tile_{self._x}/tile_{self._y}/samples"][self._cursor:self._cursor + self._batch_size][slice_start:slice_end:step]
 
         self._cursor += self._batch_size
 
