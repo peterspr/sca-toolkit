@@ -10,20 +10,23 @@ A high-performance SCA library for datasets that include NxM gridded EM traces.
 
 ## HDF5 Hierarchy
 
-**traces**
+**traces**/
 
-/ptxt[tile_x][tile_y][ptxts]
+/plaintext/tile_x/tile_y/[ptxts]
 
-/k[tile_x][tile_y][keys]
+/key/tile_x/tile_y/[keys]
 
-/samples[tile_x][tiley][samples]
+/samples/tile_x/tile_y/[samples]
 
+/ciphertext/tile_x/tile_y/[ctxts]
 
-**ptxt** is a 3D array of integers, each element a byte of the plaintext.
+**plaintext** is a 2D array of integers, each element a byte of the plaintext.
 
-**k** is a 3D array of integers, each element a byte of the key.
+**key** is a 2D array of integers, each element a byte of the key.
 
-**samples** is a 3D array of integers, each element a reading from the sample.
+**samples** is a 2D array of integers, each element a reading from the sample.
+
+**ciphertext** is a 2D array of integers, each element a byte of the ciphertext.
 
 
 ### ReadH5 class
