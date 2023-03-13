@@ -11,6 +11,7 @@ A high-performance SCA library for datasets that include NxM gridded EM traces.
 ## HDF5 Hierarchy
 
 **traces**
+
 /ptxt[tile_x][tile_y][ptxts]
 
 /k[tile_x][tile_y][keys]
