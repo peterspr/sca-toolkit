@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from src.notscared.statistics.histogram import Histogram_Method
 from src.notscared.statistics.welford import Welford
-from src.notscared.distinguishers.cpa import CPA
+from src.notscared.tasks.CPA import CPA, CPAOptions
 from src.notscared.file_handling.readh5 import ReadH5
 from devtools.data_synthesis.correlation_data import CorrelationData
 
@@ -105,19 +105,21 @@ class TestCPA(unittest.TestCase):
 
         print("Reading file.")
         read = ReadH5("test_data.h5", (0, 0), batch_size=10)
-
-        cpa_instance = CPA((0, 16), True)
+        options = CPAOptions(
+            byte_range=(0, 16)
+        )
+        cpa_instance = CPA(options)
 
         num_batches = -1
         batch_num = 0
         while read.next():
-            cpa_instance.push_batch(read.get_batch_samples(), read.get_batch_ptxts())
+            cpa_instance.push(read.get_batch_samples(), read.get_batch_ptxts())
             batch_num += 1
             # print("Batches pushed %d", batch_num)
             if batch_num == num_batches:
                 break
 
-        key_candidates = cpa_instance.get_key_candidates()
+        key_candidates = cpa_instance.get_results()
 
         np.set_printoptions(precision=1)
         print("KEY:\n", cd.key)

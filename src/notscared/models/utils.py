@@ -1,6 +1,6 @@
 import numpy as np
 
-Sbox = np.array([
+AES_SBOX = np.array([
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
     0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
     0xB7, 0xFD, 0x93, 0x26, 0x36, 0x3F, 0xF7, 0xCC, 0x34, 0xA5, 0xE5, 0xF1, 0x71, 0xD8, 0x31, 0x15,
@@ -19,6 +19,7 @@ Sbox = np.array([
     0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
 ])
 
+# Hamming weight lookup table
 HW_LUT = np.array([
     0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
     1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
@@ -37,22 +38,3 @@ HW_LUT = np.array([
     3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
     4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 ])
-
-# init array with key candidates 0-255 for one byte
-# Needs to be a column vector to broadcast
-keys = np.arange(256).reshape(-1, 1)
-
-def create_leakage_table(ptxt_bytes: np.ndarray, use_hamming_weight: bool = True):
-    # shape: (NUM_POSSIBLE_BYTE_VALS, NUM_AES_KEY_BYTES)
-
-    if use_hamming_weight:
-        # Hamming Weight
-        intermediate = np.bitwise_xor(ptxt_bytes, keys)
-        intermediate[:] = HW_LUT[intermediate]
-        return intermediate
-    else:
-        # Hamming Distance
-        sbox_in = np.bitwise_xor(ptxt_bytes, keys)
-        sbox_out = Sbox[sbox_in]
-        result = HW_LUT[np.bitwise_xor(sbox_out, sbox_in)]
-        return result

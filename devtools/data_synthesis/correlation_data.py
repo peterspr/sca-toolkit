@@ -1,7 +1,5 @@
 import numpy as np
 import h5py
-from src.notscared.utils.leakage import Sbox
-
 
 class CorrelationData:
     def __init__(self, num_traces, sample_size, hamming_weight=True):
