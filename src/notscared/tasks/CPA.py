@@ -29,8 +29,8 @@ class CPA(Task):
         self.LEAKAGE_MODEL = options.leakage_model
 
         # Between 0 and 15
-        self.BYTE_RANGE = options.byte_range
-        self.NUM_AES_KEY_BYTES = options.byte_range[1] - options.byte_range[0]
+        self.BYTE_RANGE = (int(options.byte_range[0]), int(options.byte_range[1]))
+        self.NUM_AES_KEY_BYTES = self.BYTE_RANGE[1] - self.BYTE_RANGE[0]
         self.TRACE_DURATION = None
         self.PRECISION = options.precision
         self.traces_processed = 0
