@@ -31,7 +31,7 @@ class ReadH5:
 
         # if end of data on last tiles close file and return false.
         if len(self._k) == 0:
-            print("End of File")
+            # print("End of File")
             self.close_file()
             return False
 

@@ -8,23 +8,24 @@ NUM_POSSIBLE_BYTE_VALS = 256
 
 @dataclass
 class CPAOptions(Options):
-    """Class for specifying the options for a CPA task"""
+    """
+    Class for specifying the options for a CPA task
+
+    byte_range: Range of key bytes to calculate. i.e. (0, 1) will only do the math for the key byte at index 0. (0, 16) for all 16 bytes.
+    leakage_model: An instance of a Model subclass to use as the leakage model in determining correlation.
+    precision: A numpy dtype to use for the accumulators holding intermediate values for calculating the correlation coefficients.
+    """
     byte_range: tuple = (0, 2) # Defaulting to first 2 bytes as our datasets usually dont contain 3-16
     leakage_model: Model = HammingWeight()
     precision: np.dtype = np.float32
 
 class CPA(Task):
     """
-    Correlation Power Analysis distinguisher.
-    
-    Calculates the correlation between the measured leakage (traces) and modelled leakage for each point_in_time (sample index)
-    using the Hamming Weight or Hamming Distance power models.
+    Correlation Power Analysis task. Calculates the correlation between the measured leakage and modelled leakage for each point in time using the specified leakage model.
     """
     def __init__(self, options: CPAOptions = CPAOptions()):
         """
-        byte_range: Range of key bytes to calculate. i.e. (0, 1) will only do the math for the key byte at index 0. (0, 16) for all 16 bytes.
-        use_hamming_weight: Whether to use the Hamming Weight leakage model (if true) or Hamming Distance leakage model (if false)
-        precision: A numpy dtype to use for the accumulators holding intermediate values for calculating the correlation coefficients.
+        CPAOptions: An optional instance of a CPAOptions object to configure the behavior of the CPA task.
         """
         self.LEAKAGE_MODEL = options.leakage_model
 
@@ -106,12 +107,16 @@ class CPA(Task):
         return results
 
     def get_results(self):
-        """Return an array of the 16 key bytes with the highest correlation by byte index"""
+        """
+        Returns a tuple consisting of (1) an array of the 16 key bytes with the highest correlation by byte index,
+        and (2) an array of the highest correlation value found for each of the 16 key bytes.
+        """
         if self.results is None:
             self.calculate()
 
         candidates_along_bytes = np.amax(self.results, axis=2)
         key_candidates = np.full((16), -1, dtype=np.int16)
         key_candidates[self.BYTE_RANGE[0]:self.BYTE_RANGE[1]] = np.argmax(candidates_along_bytes, axis=0)
-        candidate_correlation = np.amax(candidates_along_bytes, axis=0)
+        candidate_correlation = np.full((16), 0, dtype=self.PRECISION)
+        candidate_correlation[self.BYTE_RANGE[0]:self.BYTE_RANGE[1]] = np.amax(candidates_along_bytes, axis=0)
         return (key_candidates, candidate_correlation)
