@@ -3,7 +3,7 @@ import numpy as np
 from src.notscared.statistics.histogram import Histogram_Method
 from src.notscared.statistics.welford import Welford
 from src.notscared.tasks.CPA import CPA, CPAOptions
-from src.notscared.file_handling.readh5 import ReadH5
+# from src.notscared.file_handling.readh5 import ReadH5
 from devtools.data_synthesis.correlation_data import CorrelationData
 
 
@@ -100,24 +100,21 @@ class TestWelford(unittest.TestCase):
 class TestCPA(unittest.TestCase):
     def test_perfect_correlation_1(self):
         print("Generating Data.")
-        cd = CorrelationData(100, 10000, hamming_weight=True)
-        cd.generate_data("test_data.h5")
+        cd = CorrelationData(50, 10000, hamming_weight=True)
+        # cd.generate_data()
 
-        print("Reading file.")
-        read = ReadH5("test_data.h5", (0, 0), batch_size=10)
         options = CPAOptions(
             byte_range=(0, 16)
         )
         cpa_instance = CPA(options)
 
-        num_batches = -1
         batch_num = 0
-        while read.next():
-            cpa_instance.push(read.get_batch_samples(), read.get_batch_ptxts())
+
+        while batch_num != 5:
+            cd.generate_data()
+            cpa_instance.push(cd.get_samples(), cd.get_plaintext())
             batch_num += 1
             # print("Batches pushed %d", batch_num)
-            if batch_num == num_batches:
-                break
 
         key_candidates = cpa_instance.get_results()
 
@@ -126,8 +123,8 @@ class TestCPA(unittest.TestCase):
         print("KEY CANDIDATES:\n", key_candidates[0])
         print("KEY CANDIDATES CORRELATION:\n", key_candidates[1])
 
-        read.close_file()
-        self.assertTrue(np.array_equal(key_candidates[0], cd.key))
+        # read.close_file()
+        self.assertTrue(np.array_equal(key_candidates[0], cd.get_key()))
 
 
 if __name__ == "__main__":
