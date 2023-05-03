@@ -21,4 +21,6 @@ class Model:
         Returns:
             leakage_table (np.ndarray(NUM_POSSIBLE_BYTE_VALS, NUM_AES_KEY_BYTES)): A 2d array of leakage values
         """
+
+    def create_perfect_correlation(self, plaintext, key):
         pass

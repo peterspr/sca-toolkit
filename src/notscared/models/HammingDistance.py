@@ -13,3 +13,9 @@ class HammingDistance(Model):
         sbox_out = AES_SBOX[sbox_in]
         result = HW_LUT[np.bitwise_xor(sbox_out, sbox_in)]
         return result
+
+    def create_perfect_correlation(self, plaintext, key):
+        sbox_in = np.bitwise_xor(plaintext, key)
+        sbox_out = AES_SBOX[sbox_in]
+        result = HW_LUT[np.bitwise_xor(sbox_out, sbox_in)]
+        return result

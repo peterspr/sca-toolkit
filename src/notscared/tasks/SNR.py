@@ -26,7 +26,7 @@ class SNR(Task):
 
     def __init__(self, options: SNROptions):
         # VALUES TO SAMPLE LENGTH AND TRACES PROCESSED BY TOTAL AND BUCKET.
-        self.trace_duration = 0 
+        self.trace_duration = 0
         # self.traces_processed = 0
         self.traces_processed_bins = None
 
@@ -39,7 +39,7 @@ class SNR(Task):
         self._byte_positions = np.array(options.byte_positions, dtype=np.uint8)
         self._has_data = False
         self._indices = None
-        
+
     def push(self, traces: np.ndarray, plaintexts: np.ndarray):
         """
         input: takes in a plaintexts, a sample, and an array of byte positions.
@@ -64,8 +64,8 @@ class SNR(Task):
                     self.traces_processed_bins[key_byte, plaintexts[index, key_byte]] += 1
                     old_mean = np.copy(self._mean_accumulator[key_byte, plaintexts[index, key_byte]])
                     self._mean_accumulator[key_byte, plaintexts[index, key_byte]] += ((traces[index] - old_mean) * 1.0) / self.traces_processed_bins[key_byte, plaintexts[index, key_byte]]
-                    self._S_accumulator[key_byte, plaintexts[index, key_byte]] += ((traces[index] - old_mean)) * ((traces[index] - self._mean_accumulator[key_byte, plaintexts[index, key_byte]]))                    
-                        
+                    self._S_accumulator[key_byte, plaintexts[index, key_byte]] += ((traces[index] - old_mean)) * ((traces[index] - self._mean_accumulator[key_byte, plaintexts[index, key_byte]]))
+
         except IndexError as e:
             print(f"Failed to push... {e}")
 
