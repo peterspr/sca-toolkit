@@ -4,11 +4,11 @@ from .file_handling.readh5 import ReadH5
 from .tasks.Task import Task, Options
 
 class NotScared:
-    def __init__(self, filename: str, task: Task, task_options: Options, tile: tuple):
+    def __init__(self, filename: str, task: Task, task_options: Options):
         self.task_options = task_options
         self.filename = filename
 
-        self.tiles = tile
+        self.tiles = self.get_num_tiles()
 
         self.results = [[None for _ in range(self.tiles[1])] for _ in range(self.tiles[0])]
         # self.threads = calculate_threads
@@ -53,4 +53,26 @@ class NotScared:
 
     def collapse_tiles(self):
         pass
+
+    def get_num_tiles(self):
+        # initialize x and y
+        x = 0
+        y = 0
+        exists = True
+        while exists:
+            try:
+                # access by key base off tiles
+                self.filename[f"traces/tile_{x}/"]
+                x += 1
+            except KeyError:
+                exists = False
+
+        exists = True
+        while exists:
+            try:
+                self.filename[f"traces/tile_0/tile_{y}/"]
+                y += 1
+            except KeyError:
+                exists = False
+        return (x, y)
     

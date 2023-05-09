@@ -13,7 +13,6 @@ class ReadH5:
         self._batch_size = batch_size
         self._x = tile[0]
         self._y = tile[1]
-        self.n_tiles = self._get_number_of_tiles()
 
     def next(self, slice_start=None, slice_end=None, step=1):
         # update arrays based on x, y and cursor.
@@ -56,27 +55,3 @@ class ReadH5:
         for sample in self._samples:
             plt.plot(sample, color="b")
         plt.show()
-
-    def _get_number_of_tiles(self):
-        x = 0
-        y = 0
-        y_save = 0
-        exists = True
-        while (exists):
-            try:
-                self._file[f"traces/tile_{x}/tile_{y}"]
-                y += 1
-            except KeyError:
-                x += 1
-                y_save = y
-                y = 0
-                try:
-                    self._file[f"traces/tile_{x}/tile_{y}"]
-                except KeyError:
-                    exists = False
-        y = y_save
-        return (x, y)
-
-    @property
-    def tiles(self):
-        return self.n_tiles
