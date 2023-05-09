@@ -44,6 +44,8 @@ class CPA(Task):
         self.leakage_squared_acc = np.zeros(shape=(NUM_POSSIBLE_BYTE_VALS, self.NUM_AES_KEY_BYTES), dtype=self.PRECISION)
 
         self.results = None
+        self.candidate_correlation = None
+        self.key_candidates = None
 
     def push(self, traces: np.ndarray, plaintexts: np.ndarray):
         """
@@ -115,8 +117,13 @@ class CPA(Task):
             self.calculate()
 
         candidates_along_bytes = np.amax(self.results, axis=2)
-        key_candidates = np.full((16), -1, dtype=np.int16)
-        key_candidates[self.BYTE_RANGE[0]:self.BYTE_RANGE[1]] = np.argmax(candidates_along_bytes, axis=0)
-        candidate_correlation = np.full((16), 0, dtype=self.PRECISION)
-        candidate_correlation[self.BYTE_RANGE[0]:self.BYTE_RANGE[1]] = np.amax(candidates_along_bytes, axis=0)
-        return (key_candidates, candidate_correlation)
+        self.key_candidates = np.full((16), -1, dtype=np.int16)
+        self.key_candidates[self.BYTE_RANGE[0]:self.BYTE_RANGE[1]] = np.argmax(candidates_along_bytes, axis=0)
+        self.candidate_correlation = np.full((16), 0, dtype=self.PRECISION)
+        self.candidate_correlation[self.BYTE_RANGE[0]:self.BYTE_RANGE[1]] = np.amax(candidates_along_bytes, axis=0)
+        return (self.key_candidates, self.candidate_correlation)
+
+    def get_heat_map_value(self):
+        if self.candidate_correlation is None:
+            self.get_results()
+        return np.amax(self.candidate_correlation, axis=0)

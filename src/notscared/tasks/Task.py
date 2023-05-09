@@ -56,3 +56,6 @@ class Task:
 
     def collapse(self):
         pass
+
+    def get_heat_map_value(self):
+        pass

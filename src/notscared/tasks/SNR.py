@@ -106,3 +106,6 @@ class SNR(Task):
 
     def get_results(self):
         return self.snr
+    
+    def get_heat_map_value(self):
+        return np.amax(self.snr)
