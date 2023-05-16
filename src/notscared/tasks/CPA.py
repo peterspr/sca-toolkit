@@ -106,6 +106,13 @@ class CPA(Task):
         results = numerator / denominator
 
         self.results = results
+
+        del self.trace_acc
+        del self.trace_squared_acc
+        del self.leakage_acc
+        del self.leakage_squared_acc
+        del self.product_acc
+
         return results
 
     def get_results(self):

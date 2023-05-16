@@ -57,12 +57,11 @@ class SNR(Task):
                 self._mean_accumulator = np.zeros((len(self._byte_positions), 256, self.trace_duration), dtype=np.float32)
                 self._S_accumulator = np.zeros((len(self._byte_positions), 256, self.trace_duration), dtype=np.float32)
 
-                self._indices = np.zeros(traces.shape[0], dtype=np.uint16)
-
+            old_mean = np.empty((self.trace_duration), dtype=np.float32)
             for index in range(traces.shape[0]):
                 for key_byte in self._byte_positions:
                     self.traces_processed_bins[key_byte, plaintexts[index, key_byte]] += 1
-                    old_mean = np.copy(self._mean_accumulator[key_byte, plaintexts[index, key_byte]])
+                    np.copyto(old_mean, self._mean_accumulator[key_byte, plaintexts[index, key_byte]])
                     self._mean_accumulator[key_byte, plaintexts[index, key_byte]] += ((traces[index] - old_mean) * 1.0) / self.traces_processed_bins[key_byte, plaintexts[index, key_byte]]
                     self._S_accumulator[key_byte, plaintexts[index, key_byte]] += ((traces[index] - old_mean)) * ((traces[index] - self._mean_accumulator[key_byte, plaintexts[index, key_byte]]))
 
@@ -83,6 +82,10 @@ class SNR(Task):
 
         except IndexError as e:
             print(f"Failed to Calculate... {e}")
+
+        del self._mean_accumulator
+        del self._S_accumulator
+        del self.traces_processed_bins
 
     def plot(self):
         """
