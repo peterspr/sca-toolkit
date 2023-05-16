@@ -44,8 +44,7 @@ class CPA(Task):
         self.leakage_squared_acc = np.zeros(shape=(NUM_POSSIBLE_BYTE_VALS, self.NUM_AES_KEY_BYTES), dtype=self.PRECISION)
 
         self.results = None
-        self.candidate_correlation = None
-        self.key_candidates = None
+        self.heat_map_value = None
 
     def push(self, traces: np.ndarray, plaintexts: np.ndarray):
         """
@@ -64,7 +63,7 @@ class CPA(Task):
             self.TRACE_DURATION = traces.shape[1]
             self.trace_acc = np.zeros(shape=(self.TRACE_DURATION), dtype=self.PRECISION)
             self.trace_squared_acc = np.zeros(shape=(self.TRACE_DURATION), dtype=self.PRECISION)
-            self.product_acc = np.zeros(shape=(NUM_POSSIBLE_BYTE_VALS, self.NUM_AES_KEY_BYTES, self.TRACE_DURATION), dtype=self.PRECISION)
+            self.product_acc = np.zeros(shape=(NUM_POSSIBLE_BYTE_VALS * self.NUM_AES_KEY_BYTES, self.TRACE_DURATION), dtype=self.PRECISION)
 
         # Create leakage model for plaintexts
         # Utilize numpy broadcasting to create array of shape (BATCH_SIZE, NUM_POSSIBLE_BYTE_VALS, NUM_AES_KEY_BYTES)
@@ -83,8 +82,9 @@ class CPA(Task):
         self.trace_squared_acc += np.sum(np.square(traces, dtype=self.PRECISION), axis=0, dtype=self.PRECISION)
 
         # Populate accumulator with sum of traces*leakages
-        leakage_cube_t = leakage_cube.transpose((1, 2, 0))
-        self.product_acc += np.dot(leakage_cube_t, traces)
+        leakage_cube = leakage_cube.reshape((leakage_cube.shape[0], -1)) # Flatten to 2 dimensions and change to float to utilize BLAS multithreading
+        # leakage_cube_t = leakage_cube.transpose((1, 2, 0))
+        self.product_acc += np.dot(leakage_cube.T.astype(self.PRECISION), traces.astype(self.PRECISION))
 
         self.traces_processed += BATCH_SIZE
         print(f'traces_processed: {self.traces_processed}', end='\r')
@@ -92,20 +92,18 @@ class CPA(Task):
     def calculate(self):
         """
         Calculate the Pearson correlation coefficient for the data.
-        Each value in the 3d results array is a correlation coefficient.
         
-        If results[129, 3, 12000] == 0.63, that means the measured traces have a 0.63 
-        correlation at the point_in_time column 12000, with a 3rd key byte value of 129.
-        
-        results.shape = (NUM_POSSIBLE_BYTE_VALS, NUM_AES_KEY_BYTES, TRACE_DURATION)
+        Returns a tuple consisting of (1) an array of the 16 key bytes with the highest correlation by byte index,
+        and (2) an array of the highest correlation value found for each of the 16 key bytes.
         """
         # shape: (BYTE_VALS, KEY_BYTES, TRACE_DURATION)
+        self.product_acc = self.product_acc.reshape((NUM_POSSIBLE_BYTE_VALS, self.NUM_AES_KEY_BYTES, self.TRACE_DURATION))
         numerator = self.traces_processed * self.product_acc - self.trace_acc * self.leakage_acc[:, :, np.newaxis]
         xy = ((self.traces_processed * self.trace_squared_acc) - np.square(self.trace_acc, dtype=self.PRECISION)) * ((self.traces_processed * self.leakage_squared_acc) - np.square(self.leakage_acc, dtype=self.PRECISION))[:, :, np.newaxis]
         denominator = np.sqrt(xy, dtype=self.PRECISION)
         results = numerator / denominator
 
-        self.results = results
+        # self.results = results
 
         del self.trace_acc
         del self.trace_squared_acc
@@ -113,24 +111,26 @@ class CPA(Task):
         del self.leakage_squared_acc
         del self.product_acc
 
-        return results
+        candidates_along_bytes = np.amax(results, axis=2)
+        key_candidates = np.full((16), -1, dtype=np.int16)
+        key_candidates[self.BYTE_RANGE[0]:self.BYTE_RANGE[1]] = np.argmax(candidates_along_bytes, axis=0)
+        candidate_correlation = np.full((16), 0, dtype=self.PRECISION)
+        candidate_correlation[self.BYTE_RANGE[0]:self.BYTE_RANGE[1]] = np.amax(candidates_along_bytes, axis=0)
+        
+        self.results = (key_candidates, candidate_correlation)
+        self.heat_map_value = np.amax(candidate_correlation, axis=0)
+        return self.results
 
     def get_results(self):
         """
+        Alias for self.results
+
         Returns a tuple consisting of (1) an array of the 16 key bytes with the highest correlation by byte index,
         and (2) an array of the highest correlation value found for each of the 16 key bytes.
         """
         if self.results is None:
             self.calculate()
-
-        candidates_along_bytes = np.amax(self.results, axis=2)
-        self.key_candidates = np.full((16), -1, dtype=np.int16)
-        self.key_candidates[self.BYTE_RANGE[0]:self.BYTE_RANGE[1]] = np.argmax(candidates_along_bytes, axis=0)
-        self.candidate_correlation = np.full((16), 0, dtype=self.PRECISION)
-        self.candidate_correlation[self.BYTE_RANGE[0]:self.BYTE_RANGE[1]] = np.amax(candidates_along_bytes, axis=0)
-        return (self.key_candidates, self.candidate_correlation)
+        return self.results
 
     def get_heat_map_value(self):
-        if self.candidate_correlation is None:
-            self.get_results()
-        return np.amax(self.candidate_correlation, axis=0)
+        return self.heat_map_value

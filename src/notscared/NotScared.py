@@ -1,4 +1,3 @@
-from multiprocessing import Process
 from multiprocessing import Pool
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,9 +6,10 @@ from .file_handling.readh5 import ReadH5
 from .tasks.Task import Task, Options
 
 class NotScared:
-    def __init__(self, filename: str, task: Task, task_options: Options):
+    def __init__(self, filename: str, task: Task, task_options: Options, batch_size: int):
         self.task_options = task_options
         self.filename = filename
+        self.batch_size = batch_size
 
         self.tiles = self.get_num_tiles()
 
@@ -17,8 +17,8 @@ class NotScared:
         # self.threads = calculate_threads
         self.tasks = [[task(task_options) for _ in range(self.tiles[1])] for _ in range(self.tiles[0])]
 
-    def multi_process_run(self, tile):
-        reader = ReadH5(self.filename, tile)
+    def _run_single_tile_pool(self, tile):
+        reader = ReadH5(self.filename, tile, batch_size=self.batch_size)
         task = self.tasks[tile[0]][tile[1]]
         # push
         while reader.next():
@@ -28,20 +28,10 @@ class NotScared:
         task.calculate()
         return (tile, task)
 
-    def run_process_no_pool(self):
-        process_array = [[Process(self.multi_process_run((x, y))) for y in range(self.tiles[1])] for x in range(self.tiles[0])]
-        for x in range(self.tiles[0]):
-            for y in range(self.tiles[1]):
-                process_array[x][y].start()
-
-        for x in range(self.tiles[0]):
-            for y in range(self.tiles[1]):
-                process_array[x][y].join()
-
     def run(self):
         tiles = [(x, y) for x in range(self.tiles[0]) for y in range(self.tiles[1])]
         with Pool() as pool:
-            pool_results = pool.map(self.multi_process_run, tiles)
+            pool_results = pool.map(self._run_single_tile_pool, tiles)
             pool.close()
             pool.join()
 
@@ -55,10 +45,20 @@ class NotScared:
             for y in range(self.tiles[1]):
                 self.results[x][y] = self.tasks[x][y].get_results()
 
-    def get_results_of_tile(self, tile):
-        pass
+    def get_best_result(self):
+        highest = 0
+        highest_x = None
+        highest_y = None
+        for x in range(self.tiles[0]):
+            for y in range(self.tiles[1]):
+                if self.tasks[x][y].get_heat_map_value() > highest:
+                    highest = self.tasks[x][y].get_heat_map_value()
+                    highest_x = x
+                    highest_y = y
 
-    def get_all_results(self):
+        return self.tasks[highest_x][highest_y].get_results()
+
+    def get_results(self):
         return self.results
 
     def get_heat_map(self):
